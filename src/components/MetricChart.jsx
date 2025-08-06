@@ -23,45 +23,48 @@ const MetricChart = ({ data, selectedExperiments, selectedMetrics = [] }) => {
     return [...new Set(filteredData.map((d) => d.metric_name))];
   }, [filteredData]);
 
+  const getColor = (experimentId) => {
+    const colors = [
+      "#8884d8", "#82ca9d", "#ff7300", "#ff0000",
+      "#0088FE",
+    ];
+    const index = selectedExperiments.indexOf(experimentId) % colors.length;
+    return colors[index];
+  };
+
   return (
     <div>
       {metrics.map((metric) => {
-        const lines = selectedExperiments.map((expId) => {
-          const points = filteredData
-            .filter((d) => d.experiment_id === expId && d.metric_name === metric)
-            .sort((a, b) => a.step - b.step);
-          return { experiment_id: expId, data: points };
+        const series = {};
+
+        filteredData.forEach((entry) => {
+          if (entry.metric_name !== metric) return;
+          const step = entry.step;
+          if (!series[step]) series[step] = { step };
+          series[step][entry.experiment_id] = entry.value;
         });
 
-        const allSteps = lines.flatMap((line) => line.data.map((p) => p.step));
-        if (allSteps.length === 0) return null;
+        const chartData = Object.values(series).sort((a, b) => a.step - b.step);
 
-        const minStep = Math.min(...allSteps);
-        const maxStep = Math.max(...allSteps);
+        if (chartData.length === 0) return null;
 
         return (
           <div key={metric} className="mb-8">
             <h3 className="text-lg font-bold mb-2">{metric}</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart>
-                <XAxis
-                  dataKey="step"
-                  domain={[minStep, maxStep]}
-                  type="number"
-                  allowDecimals={false}
-                />
+              <LineChart data={chartData}>
+                <XAxis dataKey="step" allowDecimals={false} />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                {lines.map((line) => (
+                {selectedExperiments.map((expId) => (
                   <Line
-                    key={line.experiment_id}
-                    data={line.data}
-                    name={line.experiment_id}
-                    dataKey="value"
-                    stroke={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
-                    dot={false}
+                    key={expId}
                     type="monotone"
+                    dataKey={expId}
+                    stroke={getColor(expId)}
+                    dot={false}
+                    name={expId}
                   />
                 ))}
               </LineChart>
