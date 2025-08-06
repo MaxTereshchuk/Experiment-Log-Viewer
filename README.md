@@ -1,2 +1,3 @@
-Git hub pages url: https://maxtereshchuk.github.io/Experiment-Log-Viewer/
+GitHubPages url: https://maxtereshchuk.github.io/Experiment-Log-Viewer/
+
 
